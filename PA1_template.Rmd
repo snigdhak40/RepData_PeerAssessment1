@@ -1,25 +1,144 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "ActivityMonitoring"
+author: "Snigdha Kanadibhotla"
+date: "October 10, 2015"
+output: html_document
 ---
+Introduction
 
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit , Nike Fuelband, or Jawbone Up. These type of devices are part of the "quantified self" movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain underutilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
 
-## Loading and preprocessing the data
+Loading and preprocessing the data
 
+This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
+The data is a comma delimited file, it includes 17,568 observations of 3 variables:
 
-## What is mean total number of steps taken per day?
+steps: Number of steps taken in a 5 min interval
+date: The date when the measurement was taken in YYY-MM-DD format
+interval: Identifier for the 5-min interval in which the measurement was taken
+First, we read the date coercing the date column to character rather than factor
 
+```{r, echo=TRUE}
+setwd("C:\\Users\\rkanadib\\Documents\\RepData_PeerAssessment1")
+getwd()
+activityData <- read.csv ("activity.csv", header = T, sep = ",", stringsAsFactors = F)
+```
 
+Convert the date column to appropriate format
+```{r, echo=TRUE}
+activityData$date <- as.Date(activityData$date, "%Y-%m-%d")
+str(activityData)
+```
+Check the dimensions
+```{r, echo=TRUE}
+dim(activityData)
+```
+```{r, echo=TRUE}
+head(activityData)
+```
+The number of observations and variables matches the assignment description and have some blank values
+Analysis
 
-## What is the average daily activity pattern?
+1. What is the mean total number of steps taken per day?
 
+We can use dplyr to group and summarize the data and store it in the variable AvgDay, the following lines calculate the total number of steps per day and the mean number of daily steps:
+```{r, echo=TRUE}
+library (dplyr)
+AvgDay<-activityData%>%group_by(date)%>% summarize(total.steps=sum(steps,na.rm=T),mean.steps = mean(steps, na.rm = T))
+library(ggplot2)
+```
+Construct the histogram of the total steps
+```{r, echo=TRUE}
+g <- ggplot(AvgDay, aes(x=total.steps))
+g + geom_histogram(binwidth=2500)+theme(axis.text=element_text(size=12),axis.title=element_text(size=14))+labs(y = "Frequency") + labs(x = "Total steps/day")
+```
+Median will be in this interval 10000-12500 distributed equally around the center
+```{r, echo=TRUE}
+summary(AvgDay$total.steps)
+```
+```{r, echo=TRUE}
+summary (AvgDay$mean.steps)
+```
+8 missing values noted
+2. What is the daily activity pattern?
+We average the number of steps across 5 min intervals, the periods where the person is most and least active
+```{r, echo=TRUE}
+AvgInterval <- activityData %>% group_by(interval) %>% summarize(mean.steps = mean(steps, na.rm = T))
+```
+```{r, echo=TRUE}
+g <- ggplot( AvgInterval , aes(x = interval, y = mean.steps))
+g + geom_line() + theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14, face = "bold")) + labs(y = "Mean number of steps") + labs(x = "Interval")
 
+```
+Largest amount of steps happen between 500 and 1000
+3. Imputing missing values
 
-## Imputing missing values
+We noticed that there are missing values when we printed the first few rows of the activityData variable, but we have not determined what values are missing. We will calculate the percentage of missing data as well as the number of rows that contain an NA.
+```{r, echo=TRUE}
+mean(is.na(activityData$steps))
+```
+```{r, echo=TRUE}
+sum(is.na(activityData$steps))
+```
+Data 13% is missing.
+Average steps during the day to fill in NAS
+Check for missing values in the interval column within AvgInterval
+```{r, echo=TRUE}
+sum(is.na(AvgInterval$mean.steps))
+```
+```{r, echo=TRUE}
+newData <- activityData
+```
+Fill in missing values. If the column interval is NA, interval in the AvgInterval data is extracted to a variable . Assign mean.steps to column newData
+```{r, echo=TRUE}
+for (i in 1:nrow(newData)) {
+      if (is.na(newData$steps[i])) {
+            index <- newData$interval[i]
+            value <- subset(AvgInterval, interval==index)
+            newData$steps[i] <- value$mean.steps
+      }
+}
+head(newData)
+```
+Group data by date and calculate totals
+```{r, echo=TRUE}
+newAvg <- newData %>% group_by(date) %>% summarize(total.steps = sum(steps, na.rm = T))
+```
+```{r, echo=TRUE}
+g <- ggplot(newAvg, aes(x=total.steps))
+g + geom_histogram(binwidth = 2500) + theme(axis.text = element_text(size = 12),
+      axis.title = element_text(size = 14)) + labs(y = "Frequency") + labs(x = "Total steps/day")
+```
+Filling values with the interval bumps 10000-12500 class frequency
+Summaries of AvgDay is compared with  newData
+```{r, echo=TRUE}
+summary (AvgDay$total.steps)
+sd(AvgDay$total.steps, na.rm=T)
 
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+```
+```{r, echo=TRUE}
+summary (newAvg$total.steps)
+sd(newAvg$total.steps, na.rm=T)
+```
+ New data first quartile is closer to the mean and has a smaller standard deviation.Replacing NAs with the mean values for the time intervals results in lower variance and more clstering around the center
+ 4. Are there differences in activity patterns between weekdays and weekends?
+Create weekday and weekend data
+```{r, echo=TRUE}
+newData$day <- ifelse(weekdays(newData$date) %in% c("Saturday", "Sunday"), "weekend", "weekday")
+wkend <- filter(newData, day == "weekend")
+wkday <- filter(newData, day == "weekday")
+wkend <- wkend %>% group_by(interval) %>% summarize(mean.steps = mean(steps)) 
+wkend$day <- "weekend"
+wkday <- wkday %>% group_by(interval) %>% summarize(mean.steps = mean(steps)) 
+wkday$day <- "weekday"
+newInterval <- rbind(wkend, wkday)
+newInterval$day <- as.factor(newInterval$day)
+newInterval$day <- relevel(newInterval$day, "weekend")
+```
+```{r, echo=TRUE}
+g <- ggplot (newInterval, aes (interval, mean.steps))
+g + geom_line() + facet_grid (day~.) + theme(axis.text = element_text(size = 12), 
+      axis.title = element_text(size = 14)) + labs(y = "Number of Steps") + labs(x = "Interval")
+```
+Weekdays activity peaks between 7AM and 9AM and activity remails below 100 for the rest. Wekend activity remains higher than the weekday activity all day and is more evenly distributed
