@@ -142,3 +142,4 @@ g + geom_line() + facet_grid (day~.) + theme(axis.text = element_text(size = 12)
       axis.title = element_text(size = 14)) + labs(y = "Number of Steps") + labs(x = "Interval")
 ```
 Weekdays activity peaks between 7AM and 9AM and activity remails below 100 for the rest. Wekend activity remains higher than the weekday activity all day and is more evenly distributed
+

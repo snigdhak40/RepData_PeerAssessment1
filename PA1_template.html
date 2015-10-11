@@ -268,24 +268,7 @@ Analysis</p>
 <p>We can use dplyr to group and summarize the data and store it in the variable AvgDay, the following lines calculate the total number of steps per day and the mean number of daily steps:</p>
 
 <pre><code class="r">library (dplyr)
-</code></pre>
-
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 3.2.2
-</code></pre>
-
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;
-## 
-## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag
-## 
-## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union
-</code></pre>
-
-<pre><code class="r">AvgDay&lt;-activityData%&gt;%group_by(date)%&gt;% summarize(total.steps=sum(steps,na.rm=T),mean.steps = mean(steps, na.rm = T))
+AvgDay&lt;-activityData%&gt;%group_by(date)%&gt;% summarize(total.steps=sum(steps,na.rm=T),mean.steps = mean(steps, na.rm = T))
 library(ggplot2)
 </code></pre>
 

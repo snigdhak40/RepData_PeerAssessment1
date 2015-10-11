@@ -78,26 +78,6 @@ We can use dplyr to group and summarize the data and store it in the variable Av
 
 ```r
 library (dplyr)
-```
-
-```
-## Warning: package 'dplyr' was built under R version 3.2.2
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-## 
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-## 
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```r
 AvgDay<-activityData%>%group_by(date)%>% summarize(total.steps=sum(steps,na.rm=T),mean.steps = mean(steps, na.rm = T))
 library(ggplot2)
 ```
@@ -273,3 +253,4 @@ g + geom_line() + facet_grid (day~.) + theme(axis.text = element_text(size = 12)
 
 ![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png) 
 Weekdays activity peaks between 7AM and 9AM and activity remails below 100 for the rest. Wekend activity remains higher than the weekday activity all day and is more evenly distributed
+
